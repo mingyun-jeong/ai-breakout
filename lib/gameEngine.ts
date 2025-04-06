@@ -288,6 +288,10 @@ export class GameEngine {
       }
     }
     
+    // Get current canvas dimensions
+    const gameWidth = this.config.width;
+    const gameHeight = this.config.height;
+    
     // Update balls
     for (let i = this.state.balls.length - 1; i >= 0; i--) {
       const ball = this.state.balls[i];
@@ -298,10 +302,10 @@ export class GameEngine {
       updateBallPosition(ball, deltaTime, this.state.gameOver);
       
       // Check wall collisions
-      handleWallCollision(ball, this.config.width);
+      handleWallCollision(ball, gameWidth);
       
       // Check if ball is lost (below bottom edge for player, above top edge for AI)
-      if (isBallLost(ball, this.config.height)) {
+      if (isBallLost(ball, gameHeight)) {
         if (ball.velocity.y > 0) { // Player's ball is lost
           this.state.playerLives--;
           

@@ -31,16 +31,24 @@ const Game: React.FC<GameProps> = ({ difficulty, onGameOver }) => {
       // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      // Set scale factors for rendering (게임 로직 좌표 -> 캔버스 좌표)
+      const scaleX = canvas.width / DEFAULT_CONFIG.width;
+      const scaleY = canvas.height / DEFAULT_CONFIG.height;
+      
+      // Apply scaling to rendering context
+      ctx.save();
+      ctx.scale(scaleX, scaleY);
+
       // Draw background
       ctx.fillStyle = '#111';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0, 0, DEFAULT_CONFIG.width, DEFAULT_CONFIG.height);
 
       // Draw dividing line
       ctx.strokeStyle = '#444';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(0, canvas.height / 2);
-      ctx.lineTo(canvas.width, canvas.height / 2);
+      ctx.moveTo(0, DEFAULT_CONFIG.height / 2);
+      ctx.lineTo(DEFAULT_CONFIG.width, DEFAULT_CONFIG.height / 2);
       ctx.stroke();
 
       // Draw paddles
@@ -127,31 +135,34 @@ const Game: React.FC<GameProps> = ({ difficulty, onGameOver }) => {
       // 게임 오버 시 표시할 텍스트
       if (isGameOver) {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, DEFAULT_CONFIG.width, DEFAULT_CONFIG.height);
         
         ctx.font = 'bold 36px Arial';
         ctx.textAlign = 'center';
         ctx.fillStyle = '#FFFFFF';
-        ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 50);
+        ctx.fillText('GAME OVER', DEFAULT_CONFIG.width / 2, DEFAULT_CONFIG.height / 2 - 50);
         
         // 승자 표시
         if (winner === 'human') {
           ctx.fillStyle = '#4CAF50';
-          ctx.fillText('YOU WIN!', canvas.width / 2, canvas.height / 2);
+          ctx.fillText('YOU WIN!', DEFAULT_CONFIG.width / 2, DEFAULT_CONFIG.height / 2);
         } else if (winner === 'ai') {
           ctx.fillStyle = '#E91E63';
-          ctx.fillText('AI WINS!', canvas.width / 2, canvas.height / 2);
+          ctx.fillText('AI WINS!', DEFAULT_CONFIG.width / 2, DEFAULT_CONFIG.height / 2);
         } else {
           ctx.fillStyle = '#FFC107';
-          ctx.fillText('TIE GAME!', canvas.width / 2, canvas.height / 2);
+          ctx.fillText('TIE GAME!', DEFAULT_CONFIG.width / 2, DEFAULT_CONFIG.height / 2);
         }
         
         // 점수 표시
         ctx.font = '24px Arial';
         ctx.fillStyle = '#FFFFFF';
-        ctx.fillText(`Your Score: ${gameState.playerScore}`, canvas.width / 2, canvas.height / 2 + 50);
-        ctx.fillText(`AI Score: ${gameState.aiScore}`, canvas.width / 2, canvas.height / 2 + 90);
+        ctx.fillText(`Your Score: ${gameState.playerScore}`, DEFAULT_CONFIG.width / 2, DEFAULT_CONFIG.height / 2 + 50);
+        ctx.fillText(`AI Score: ${gameState.aiScore}`, DEFAULT_CONFIG.width / 2, DEFAULT_CONFIG.height / 2 + 90);
       }
+      
+      // Restore original scale
+      ctx.restore();
 
       // Schedule next frame if game is running or game over (to show final state)
       if (!isPaused) {
@@ -173,15 +184,21 @@ const Game: React.FC<GameProps> = ({ difficulty, onGameOver }) => {
       const container = canvas.parentElement;
       if (!container) return;
       
+      // 캔버스 크기는 컨테이너 크기에 맞추지만, 게임 로직은 원래 크기 그대로 유지
       const maxWidth = Math.min(DEFAULT_CONFIG.width, container.clientWidth);
       const aspectRatio = DEFAULT_CONFIG.height / DEFAULT_CONFIG.width;
       
       canvas.width = maxWidth;
       canvas.height = maxWidth * aspectRatio;
       
+      // 캔버스 스타일 크기 설정
+      canvas.style.width = '100%';
+      canvas.style.height = 'auto';
+      
       // Adapt game engine elements to new canvas size if already initialized
       if (gameEngineRef.current) {
-        gameEngineRef.current.adaptToCanvasSize(canvas.width, canvas.height);
+        // 게임 엔진은 원래 크기 그대로 유지하고, 렌더링할 때만 스케일링
+        // gameEngineRef.current.adaptToCanvasSize(canvas.width, canvas.height);
       }
     };
 
@@ -280,11 +297,14 @@ const Game: React.FC<GameProps> = ({ difficulty, onGameOver }) => {
       if (isPaused || isGameOver || !gameEngineRef.current) return;
 
       const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width; // 캔버스 내부 크기와 표시 크기의 비율
-      const x = (e.clientX - rect.left) * scaleX;
       
-      // Convert to game coordinate system
-      gameEngineRef.current.movePlayerPaddle(x - (gameEngineRef.current.getState().playerPaddle.width / 2));
+      // 실제 그려지는 크기와 게임 로직 크기의 비율
+      const scaleRatio = DEFAULT_CONFIG.width / rect.width;
+      
+      // 마우스 x좌표를 게임 좌표계로 변환
+      const gameX = (e.clientX - rect.left) * scaleRatio;
+      
+      gameEngineRef.current.movePlayerPaddle(gameX - (gameEngineRef.current.getState().playerPaddle.width / 2));
     };
 
     const handleTouchMove = (e: TouchEvent) => {
@@ -292,11 +312,14 @@ const Game: React.FC<GameProps> = ({ difficulty, onGameOver }) => {
         if (isPaused || isGameOver || !gameEngineRef.current) return;
 
         const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width; // 캔버스 내부 크기와 표시 크기의 비율
-        const x = (e.touches[0].clientX - rect.left) * scaleX;
         
-        // Convert to game coordinate system
-        gameEngineRef.current.movePlayerPaddle(x - (gameEngineRef.current.getState().playerPaddle.width / 2));
+        // 실제 그려지는 크기와 게임 로직 크기의 비율
+        const scaleRatio = DEFAULT_CONFIG.width / rect.width;
+        
+        // 터치 x좌표를 게임 좌표계로 변환
+        const gameX = (e.touches[0].clientX - rect.left) * scaleRatio;
+        
+        gameEngineRef.current.movePlayerPaddle(gameX - (gameEngineRef.current.getState().playerPaddle.width / 2));
       }
     };
 
