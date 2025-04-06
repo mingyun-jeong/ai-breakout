@@ -107,8 +107,7 @@ export const applyPowerUp = (gameState: GameState, powerUp: PowerUp, player: 'hu
       // Apply to all active balls
       gameState.balls.forEach(ball => {
         if (ball.active) {
-          // Store original speed to restore later
-          const originalSpeed = ball.speed;
+          // Apply speed multiplier
           ball.speed *= POWER_UP_EFFECTS[PowerUpType.SLOW_BALL].speedMultiplier;
           
           // Add to active power-ups with expiration time

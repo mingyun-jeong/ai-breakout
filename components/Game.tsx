@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { GameEngine, DEFAULT_CONFIG } from '../lib/gameEngine';
 import { AIDifficulty, Ball, Brick, BrickType, GameEvent, PowerUp, PowerUpType } from '../lib/types';
 
@@ -20,8 +20,8 @@ const Game: React.FC<GameProps> = ({ difficulty, onGameOver }) => {
   const animationFrameRef = useRef<number | null>(null);
   const [winner, setWinner] = useState<'human' | 'ai' | 'tie' | null>(null);
 
-  // Rendering function - moved before useEffect
-  const startRendering = (canvas: HTMLCanvasElement) => {
+  // Rendering function wrapped in useCallback
+  const startRendering = useCallback((canvas: HTMLCanvasElement) => {
     const ctx = canvas.getContext('2d');
     if (!ctx || !gameEngineRef.current) return;
 
@@ -161,7 +161,7 @@ const Game: React.FC<GameProps> = ({ difficulty, onGameOver }) => {
 
     // Start the rendering loop
     animationFrameRef.current = requestAnimationFrame(renderFrame);
-  };
+  }, [isPaused, isGameOver, winner, gameEngineRef, animationFrameRef]);
 
   // Initialize game engine
   useEffect(() => {

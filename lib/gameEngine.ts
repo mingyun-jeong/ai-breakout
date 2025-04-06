@@ -296,7 +296,7 @@ export class GameEngine {
       updateBallPosition(ball, deltaTime, this.state.gameOver);
       
       // Check wall collisions
-      handleWallCollision(ball, this.config.width, this.config.height);
+      handleWallCollision(ball, this.config.width);
       
       // Check if ball is lost (below bottom edge for player, above top edge for AI)
       if (isBallLost(ball, this.config.height)) {

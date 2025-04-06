@@ -57,7 +57,7 @@ export const handleBrickCollision = (ball: Ball, brick: Brick): void => {
 };
 
 // Handle wall collisions
-export const handleWallCollision = (ball: Ball, gameWidth: number, gameHeight: number): boolean => {
+export const handleWallCollision = (ball: Ball, gameWidth: number): boolean => {
   let collided = false;
   
   // Left and right walls
