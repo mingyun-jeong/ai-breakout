@@ -81,7 +81,7 @@ export interface CollisionEvent {
 
 export interface GameEvent {
   type: 'score' | 'life_lost' | 'power_up' | 'game_over' | 'time_update';
-  player: 'human' | 'ai';
+  player: 'human' | 'ai' | 'tie';
   value?: number; // Score, life count, or time remaining
   powerUpType?: PowerUpType;
 } 

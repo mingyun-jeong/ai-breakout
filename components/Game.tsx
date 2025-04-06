@@ -251,7 +251,7 @@ const Game: React.FC<GameProps> = ({ difficulty, onGameOver }) => {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [difficulty, onGameOver, isGameOver]);
+  }, [difficulty, onGameOver, isGameOver, startRendering]);
 
   // Handle mouse/touch movement for paddle control
   useEffect(() => {
