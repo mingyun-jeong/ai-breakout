@@ -108,7 +108,8 @@ export const updatePowerUp = (
   // Check if power-up is caught by paddle
   if (checkCollision({
     ...powerUp,
-    radius: Math.min(powerUp.width, powerUp.height) / 2
+    radius: Math.min(powerUp.width, powerUp.height) / 2,
+    speed: Math.sqrt(powerUp.velocity.x * powerUp.velocity.x + powerUp.velocity.y * powerUp.velocity.y)
   } as Ball, paddle)) {
     return true; // Caught!
   }

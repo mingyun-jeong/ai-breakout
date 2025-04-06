@@ -1,4 +1,5 @@
 import { Ball, GameState, PowerUp, PowerUpType, Vector2D } from './types';
+import { DEFAULT_CONFIG } from './gameEngine';
 
 // Constants for power-up effects
 const POWER_UP_EFFECTS = {
@@ -67,8 +68,8 @@ export const applyPowerUp = (gameState: GameState, powerUp: PowerUp, player: 'hu
     case PowerUpType.EXTRA_BALL: {
       // Check if we've reached the maximum number of balls
       const playerBalls = gameState.balls.filter(b => 
-        (player === 'human' && b.position.y > gameState.height / 2) || 
-        (player === 'ai' && b.position.y < gameState.height / 2)
+        (player === 'human' && b.position.y > DEFAULT_CONFIG.height / 2) || 
+        (player === 'ai' && b.position.y < DEFAULT_CONFIG.height / 2)
       );
       
       if (playerBalls.length < POWER_UP_EFFECTS[PowerUpType.EXTRA_BALL].maxExtraBalls) {
