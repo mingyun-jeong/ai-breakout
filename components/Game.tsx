@@ -439,6 +439,51 @@ const Game: React.FC<GameProps> = ({ difficulty, onGameOver }) => {
         )}
       </div>
 
+      {/* 모바일 터치 컨트롤 영역 */}
+      {!isPaused && !isGameOver && (
+        <div 
+          className="mt-4 w-full max-w-[800px] h-24 bg-gray-800 rounded-lg flex items-center justify-center relative border-2 border-gray-700 mb-4 sm:block md:block"
+          onTouchMove={(e) => {
+            if (!gameEngineRef.current) return;
+            
+            const touch = e.touches[0];
+            const target = e.currentTarget;
+            const rect = target.getBoundingClientRect();
+            
+            // 터치 위치를 컨트롤 영역 내의 비율로 계산 (0~1)
+            const ratio = (touch.clientX - rect.left) / rect.width;
+            
+            // 게임 내 패들 위치 계산
+            const paddlePosition = ratio * DEFAULT_CONFIG.width - (gameEngineRef.current.getState().playerPaddle.width / 2);
+            
+            // 패들 이동
+            gameEngineRef.current.movePlayerPaddle(paddlePosition);
+          }}
+          onMouseMove={(e) => {
+            if (isPaused || isGameOver || !gameEngineRef.current) return;
+            
+            // 마우스 버튼이 눌려있을 때만 처리
+            if (e.buttons !== 1) return;
+            
+            const rect = e.currentTarget.getBoundingClientRect();
+            
+            // 마우스 위치를 컨트롤 영역 내의 비율로 계산 (0~1)
+            const ratio = (e.clientX - rect.left) / rect.width;
+            
+            // 게임 내 패들 위치 계산
+            const paddlePosition = ratio * DEFAULT_CONFIG.width - (gameEngineRef.current.getState().playerPaddle.width / 2);
+            
+            // 패들 이동
+            gameEngineRef.current.movePlayerPaddle(paddlePosition);
+          }}
+        >
+          <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
+            <span className="text-white text-lg">← Slide to control paddle →</span>
+          </div>
+          <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-blue-500 via-green-500 to-red-500 rounded-b-lg"></div>
+        </div>
+      )}
+
       <div className="mt-4 w-full max-w-[800px] flex justify-center">
         <button
           className="bg-gray-600 hover:bg-gray-700 text-white px-3 sm:px-4 py-2 rounded-lg mr-4 text-sm sm:text-base"
