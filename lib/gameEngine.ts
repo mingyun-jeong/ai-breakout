@@ -198,7 +198,9 @@ export class GameEngine {
     }
     
     // Schedule next frame
-    this.gameLoopId = requestAnimationFrame(this.gameLoop.bind(this));
+    if (this.gameLoopId !== null) {
+      this.gameLoopId = requestAnimationFrame(this.gameLoop.bind(this));
+    }
   }
   
   // Update game state
@@ -438,5 +440,48 @@ export class GameEngine {
   // Get game configuration
   public getConfig(): GameConfig {
     return this.config;
+  }
+  
+  // Adapt game elements to canvas size
+  public adaptToCanvasSize(canvasWidth: number, canvasHeight: number): void {
+    // Calculate scaling factors
+    const scaleX = canvasWidth / DEFAULT_CONFIG.width;
+    const scaleY = canvasHeight / DEFAULT_CONFIG.height;
+    
+    // Adjust paddle positions and sizes
+    this.state.playerPaddle.width *= scaleX;
+    this.state.playerPaddle.height *= scaleY;
+    this.state.playerPaddle.position.x *= scaleX;
+    this.state.playerPaddle.position.y = canvasHeight - this.state.playerPaddle.height - 30 * scaleY;
+    
+    this.state.aiPaddle.width *= scaleX;
+    this.state.aiPaddle.height *= scaleY;
+    this.state.aiPaddle.position.x *= scaleX;
+    this.state.aiPaddle.position.y = 15 * scaleY;
+    
+    // Adjust balls
+    this.state.balls.forEach(ball => {
+      ball.position.x *= scaleX;
+      ball.position.y *= scaleY;
+      ball.radius *= Math.min(scaleX, scaleY);
+      ball.width *= scaleX;
+      ball.height *= scaleY;
+    });
+    
+    // Adjust bricks
+    this.state.bricks.forEach(brick => {
+      brick.position.x *= scaleX;
+      brick.position.y *= scaleY;
+      brick.width *= scaleX;
+      brick.height *= scaleY;
+    });
+    
+    // Adjust power-ups
+    this.state.powerUps.forEach(powerUp => {
+      powerUp.position.x *= scaleX;
+      powerUp.position.y *= scaleY;
+      powerUp.width *= scaleX;
+      powerUp.height *= scaleY;
+    });
   }
 } 

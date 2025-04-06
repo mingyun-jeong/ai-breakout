@@ -168,9 +168,26 @@ const Game: React.FC<GameProps> = ({ difficulty, onGameOver }) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Set canvas dimensions
-    canvas.width = DEFAULT_CONFIG.width;
-    canvas.height = DEFAULT_CONFIG.height;
+    // Set canvas dimensions - make it responsive
+    const updateCanvasSize = () => {
+      const container = canvas.parentElement;
+      if (!container) return;
+      
+      const maxWidth = Math.min(DEFAULT_CONFIG.width, container.clientWidth);
+      const aspectRatio = DEFAULT_CONFIG.height / DEFAULT_CONFIG.width;
+      
+      canvas.width = maxWidth;
+      canvas.height = maxWidth * aspectRatio;
+      
+      // Adapt game engine elements to new canvas size if already initialized
+      if (gameEngineRef.current) {
+        gameEngineRef.current.adaptToCanvasSize(canvas.width, canvas.height);
+      }
+    };
+
+    // Update canvas size initially and on window resize
+    updateCanvasSize();
+    window.addEventListener('resize', updateCanvasSize);
 
     // Create game engine
     const gameEngine = new GameEngine({
@@ -244,6 +261,7 @@ const Game: React.FC<GameProps> = ({ difficulty, onGameOver }) => {
 
     // Clean up
     return () => {
+      window.removeEventListener('resize', updateCanvasSize);
       if (gameEngine) {
         gameEngine.stop();
       }
@@ -262,7 +280,10 @@ const Game: React.FC<GameProps> = ({ difficulty, onGameOver }) => {
       if (isPaused || isGameOver || !gameEngineRef.current) return;
 
       const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
+      const scaleX = canvas.width / rect.width; // 캔버스 내부 크기와 표시 크기의 비율
+      const x = (e.clientX - rect.left) * scaleX;
+      
+      // Convert to game coordinate system
       gameEngineRef.current.movePlayerPaddle(x - (gameEngineRef.current.getState().playerPaddle.width / 2));
     };
 
@@ -271,7 +292,10 @@ const Game: React.FC<GameProps> = ({ difficulty, onGameOver }) => {
         if (isPaused || isGameOver || !gameEngineRef.current) return;
 
         const rect = canvas.getBoundingClientRect();
-        const x = e.touches[0].clientX - rect.left;
+        const scaleX = canvas.width / rect.width; // 캔버스 내부 크기와 표시 크기의 비율
+        const x = (e.touches[0].clientX - rect.left) * scaleX;
+        
+        // Convert to game coordinate system
         gameEngineRef.current.movePlayerPaddle(x - (gameEngineRef.current.getState().playerPaddle.width / 2));
       }
     };
@@ -327,13 +351,13 @@ const Game: React.FC<GameProps> = ({ difficulty, onGameOver }) => {
 
   return (
     <div className="flex flex-col items-center">
-      <div className="mb-4 w-full max-w-[800px] flex justify-between items-center bg-gray-800 p-3 rounded-lg">
-        <div className="text-lg">
+      <div className="mb-4 w-full max-w-[800px] flex flex-col sm:flex-row justify-between items-center bg-gray-800 p-3 rounded-lg">
+        <div className="text-lg mb-2 sm:mb-0">
           <span className="text-green-500">Player: {playerScore}</span>
           <span className="mx-2 text-gray-400">|</span>
           <span className="text-red-500">AI: {aiScore}</span>
         </div>
-        <div className="text-lg font-mono">
+        <div className="text-lg font-mono mb-2 sm:mb-0">
           {formatTime(timeRemaining)}
         </div>
         <div className="text-lg">
@@ -343,33 +367,31 @@ const Game: React.FC<GameProps> = ({ difficulty, onGameOver }) => {
         </div>
       </div>
 
-      <div className="relative">
+      <div className="relative w-full max-w-[800px]">
         <canvas
           ref={canvasRef}
-          className="border border-gray-700 rounded-lg shadow-lg"
-          width={DEFAULT_CONFIG.width}
-          height={DEFAULT_CONFIG.height}
+          className="w-full h-auto border border-gray-700 rounded-lg shadow-lg"
         />
 
         {(isPaused || isGameOver) && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-70 rounded-lg">
             {isPaused && !isGameOver && (
-              <h2 className="text-4xl text-white mb-4">PAUSED</h2>
+              <h2 className="text-2xl sm:text-4xl text-white mb-4">PAUSED</h2>
             )}
             {isGameOver && (
               <>
-                <h2 className="text-4xl text-white mb-4">GAME OVER</h2>
-                <p className={`text-2xl mb-6 ${
+                <h2 className="text-2xl sm:text-4xl text-white mb-4">GAME OVER</h2>
+                <p className={`text-xl sm:text-2xl mb-6 ${
                   winner === 'human' ? 'text-green-400' : 
                   winner === 'ai' ? 'text-red-400' : 'text-yellow-400'
                 }`}>
                   {winner === 'human' ? 'You Win!' : 
                    winner === 'ai' ? 'AI Wins!' : 'Tie Game!'}
                 </p>
-                <p className="text-xl text-white mb-1">
+                <p className="text-lg sm:text-xl text-white mb-1">
                   Your Score: <span className="text-green-400 font-bold">{playerScore}</span>
                 </p>
-                <p className="text-xl text-white mb-6">
+                <p className="text-lg sm:text-xl text-white mb-6">
                   AI Score: <span className="text-red-400 font-bold">{aiScore}</span>
                 </p>
               </>
@@ -377,14 +399,14 @@ const Game: React.FC<GameProps> = ({ difficulty, onGameOver }) => {
             <div className="flex space-x-4">
               {!isGameOver && (
                 <button
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-xl"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg text-lg sm:text-xl"
                   onClick={togglePause}
                 >
                   Resume
                 </button>
               )}
               <button
-                className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg text-xl"
+                className="bg-green-600 hover:bg-green-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg text-lg sm:text-xl"
                 onClick={restartGame}
               >
                 {isGameOver ? 'Play Again' : 'Restart'}
@@ -396,14 +418,14 @@ const Game: React.FC<GameProps> = ({ difficulty, onGameOver }) => {
 
       <div className="mt-4 w-full max-w-[800px] flex justify-center">
         <button
-          className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg mr-4"
+          className="bg-gray-600 hover:bg-gray-700 text-white px-3 sm:px-4 py-2 rounded-lg mr-4 text-sm sm:text-base"
           onClick={togglePause}
           disabled={isGameOver}
         >
           {isPaused ? 'Resume' : 'Pause'}
         </button>
         <button
-          className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
+          className="bg-red-600 hover:bg-red-700 text-white px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base"
           onClick={restartGame}
         >
           Restart
