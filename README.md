@@ -1,40 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# AI Breakout
 
-## Getting Started
+A classic brick-breaking game where you compete against an AI opponent. Break as many bricks as possible within the time limit and achieve the highest score!
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Classic brick-breaking gameplay
+- Human vs AI competition with different difficulty levels
+- Power-ups from special bricks
+- Time-limited matches (2 minutes)
+- Global leaderboard with Supabase
+- Responsive design
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Tech Stack
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+- **Frontend**: Next.js, TypeScript, Tailwind CSS
+- **Game Engine**: HTML5 Canvas with custom physics
+- **Backend**: Supabase for authentication and leaderboard
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+## Setup Instructions
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/ai-breakout.git
+   cd ai-breakout
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-## Learn More
+3. Set up Supabase:
+   - Create a Supabase account at [supabase.com](https://supabase.com)
+   - Create a new project
+   - Create a table named `leaderboard` with the following structure:
+     - `id` (uuid, primary key)
+     - `user_name` (text, not null)
+     - `score` (integer, not null)
+     - `play_time` (integer, not null) - in seconds
+     - `remaining_lives` (integer, not null)
+     - `difficulty` (text, not null)
+     - `created_at` (timestamp with timezone, default: now())
+   - Update the `.env.local` file with your Supabase URL and anonymous key
 
-To learn more about Next.js, take a look at the following resources:
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Game Controls
 
-## Deploy on Vercel
+- Move your paddle with the mouse
+- Use settings to select the AI difficulty level before starting the game
+- Click the pause button to pause/resume the game
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## AI Difficulty Levels
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+- **Easy**: Slow paddle movement, basic prediction
+- **Normal**: Standard speed, improved prediction
+- **Hard**: Fast paddle movement, advanced trajectory prediction
+
+## License
+
+MIT
