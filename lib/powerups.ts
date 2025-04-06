@@ -25,7 +25,7 @@ interface ActivePowerUp {
 const activePowerUps: ActivePowerUp[] = [];
 
 // Create a new power-up at the position of a broken brick
-export const createPowerUp = (position: Vector2D, gameWidth: number): PowerUp => {
+export const createPowerUp = (position: Vector2D): PowerUp => {
   // Randomly select a power-up type
   const powerUpTypes = Object.values(PowerUpType);
   const randomType = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];

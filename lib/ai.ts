@@ -1,4 +1,4 @@
-import { AIDifficulty, Ball, Brick, GameState, Paddle, Vector2D } from './types';
+import { AIDifficulty, Ball, Brick, GameState } from './types';
 
 // AI difficulty settings
 const difficultySettings = {

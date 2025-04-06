@@ -18,140 +18,9 @@ const Game: React.FC<GameProps> = ({ difficulty, onGameOver }) => {
   const [isPaused, setIsPaused] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
   const animationFrameRef = useRef<number | null>(null);
+  const [winner, setWinner] = useState<'human' | 'ai' | 'tie' | null>(null);
 
-  // Initialize game engine
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    // Set canvas dimensions
-    canvas.width = DEFAULT_CONFIG.width;
-    canvas.height = DEFAULT_CONFIG.height;
-
-    // Create game engine
-    const gameEngine = new GameEngine({
-      aiDifficulty: difficulty,
-    });
-
-    // Handle game events
-    gameEngine.onEvent((event: GameEvent) => {
-      switch (event.type) {
-        case 'score':
-          if (event.player === 'human') {
-            setPlayerScore(event.value || 0);
-          } else {
-            setAiScore(event.value || 0);
-          }
-          break;
-        case 'life_lost':
-          if (event.player === 'human') {
-            setPlayerLives(event.value || 0);
-          } else {
-            setAiLives(event.value || 0);
-          }
-          break;
-        case 'time_update':
-          setTimeRemaining(event.value || 0);
-          break;
-        case 'game_over':
-          setIsGameOver(true);
-          gameEngine.stop();
-          onGameOver(
-            gameEngine.getState().playerScore,
-            gameEngine.getState().aiScore,
-            gameEngine.getState().playerLives,
-            DEFAULT_CONFIG.gameDuration - gameEngine.getState().timeRemaining
-          );
-          break;
-      }
-    });
-
-    // Save reference
-    gameEngineRef.current = gameEngine;
-
-    // Start the game
-    gameEngine.start();
-
-    // Start rendering
-    startRendering(canvas);
-
-    // Clean up
-    return () => {
-      if (gameEngine) {
-        gameEngine.stop();
-      }
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, [difficulty, onGameOver]);
-
-  // Handle mouse/touch movement for paddle control
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (isPaused || isGameOver || !gameEngineRef.current) return;
-
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      gameEngineRef.current.movePlayerPaddle(x - (gameEngineRef.current.getState().playerPaddle.width / 2));
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches.length > 0) {
-        if (isPaused || isGameOver || !gameEngineRef.current) return;
-
-        const rect = canvas.getBoundingClientRect();
-        const x = e.touches[0].clientX - rect.left;
-        gameEngineRef.current.movePlayerPaddle(x - (gameEngineRef.current.getState().playerPaddle.width / 2));
-      }
-    };
-
-    canvas.addEventListener('mousemove', handleMouseMove);
-    canvas.addEventListener('touchmove', handleTouchMove);
-
-    return () => {
-      canvas.removeEventListener('mousemove', handleMouseMove);
-      canvas.removeEventListener('touchmove', handleTouchMove);
-    };
-  }, [isPaused, isGameOver]);
-
-  // Handle pause/resume
-  const togglePause = () => {
-    if (!gameEngineRef.current) return;
-
-    if (isPaused) {
-      gameEngineRef.current.resume();
-      startRendering(canvasRef.current!);
-    } else {
-      gameEngineRef.current.pause();
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = null;
-      }
-    }
-
-    setIsPaused(!isPaused);
-  };
-
-  // Handle game restart
-  const restartGame = () => {
-    if (!gameEngineRef.current) return;
-
-    gameEngineRef.current.reset();
-    setPlayerScore(0);
-    setAiScore(0);
-    setPlayerLives(DEFAULT_CONFIG.initialLives);
-    setAiLives(DEFAULT_CONFIG.initialLives);
-    setTimeRemaining(DEFAULT_CONFIG.gameDuration);
-    setIsPaused(false);
-    setIsGameOver(false);
-    startRendering(canvasRef.current!);
-  };
-
-  // Rendering function
+  // Rendering function - moved before useEffect
   const startRendering = (canvas: HTMLCanvasElement) => {
     const ctx = canvas.getContext('2d');
     if (!ctx || !gameEngineRef.current) return;
@@ -255,14 +124,198 @@ const Game: React.FC<GameProps> = ({ difficulty, onGameOver }) => {
         );
       });
 
-      // Schedule next frame if game is running
-      if (!isPaused && !isGameOver) {
+      // 게임 오버 시 표시할 텍스트
+      if (isGameOver) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.font = 'bold 36px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 50);
+        
+        // 승자 표시
+        if (winner === 'human') {
+          ctx.fillStyle = '#4CAF50';
+          ctx.fillText('YOU WIN!', canvas.width / 2, canvas.height / 2);
+        } else if (winner === 'ai') {
+          ctx.fillStyle = '#E91E63';
+          ctx.fillText('AI WINS!', canvas.width / 2, canvas.height / 2);
+        } else {
+          ctx.fillStyle = '#FFC107';
+          ctx.fillText('TIE GAME!', canvas.width / 2, canvas.height / 2);
+        }
+        
+        // 점수 표시
+        ctx.font = '24px Arial';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText(`Your Score: ${gameState.playerScore}`, canvas.width / 2, canvas.height / 2 + 50);
+        ctx.fillText(`AI Score: ${gameState.aiScore}`, canvas.width / 2, canvas.height / 2 + 90);
+      }
+
+      // Schedule next frame if game is running or game over (to show final state)
+      if (!isPaused) {
         animationFrameRef.current = requestAnimationFrame(renderFrame);
       }
     };
 
     // Start the rendering loop
     animationFrameRef.current = requestAnimationFrame(renderFrame);
+  };
+
+  // Initialize game engine
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Set canvas dimensions
+    canvas.width = DEFAULT_CONFIG.width;
+    canvas.height = DEFAULT_CONFIG.height;
+
+    // Create game engine
+    const gameEngine = new GameEngine({
+      aiDifficulty: difficulty,
+    });
+
+    // Handle game events
+    gameEngine.onEvent((event: GameEvent) => {
+      switch (event.type) {
+        case 'score':
+          if (!isGameOver) { // 게임 오버 상태가 아닐 때만 점수 업데이트
+            if (event.player === 'human') {
+              setPlayerScore(event.value || 0);
+            } else {
+              setAiScore(event.value || 0);
+            }
+          }
+          break;
+        case 'life_lost':
+          if (!isGameOver) { // 게임 오버 상태가 아닐 때만 생명 업데이트
+            if (event.player === 'human') {
+              setPlayerLives(event.value || 0);
+            } else {
+              setAiLives(event.value || 0);
+            }
+          }
+          break;
+        case 'time_update':
+          if (!isGameOver) { // 게임 오버 상태가 아닐 때만 시간 업데이트
+            setTimeRemaining(event.value || 0);
+          }
+          break;
+        case 'game_over':
+          if (!isGameOver) { // 이미 게임 오버 상태가 아닐 때만 처리
+            setIsGameOver(true);
+            gameEngine.stop();
+            
+            // 최종 상태에서 점수를 가져와 onGameOver에 전달
+            const finalState = gameEngine.getState();
+            setPlayerScore(finalState.playerScore);
+            setAiScore(finalState.aiScore);
+            
+            // 승자 결정
+            if (finalState.playerScore > finalState.aiScore) {
+              setWinner('human');
+            } else if (finalState.playerScore < finalState.aiScore) {
+              setWinner('ai');
+            } else {
+              setWinner('tie');
+            }
+            
+            onGameOver(
+              finalState.playerScore,
+              finalState.aiScore,
+              finalState.playerLives,
+              DEFAULT_CONFIG.gameDuration - finalState.timeRemaining
+            );
+          }
+          break;
+      }
+    });
+
+    // Save reference
+    gameEngineRef.current = gameEngine;
+
+    // Start the game
+    gameEngine.start();
+
+    // Start rendering
+    startRendering(canvas);
+
+    // Clean up
+    return () => {
+      if (gameEngine) {
+        gameEngine.stop();
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [difficulty, onGameOver, isGameOver]);
+
+  // Handle mouse/touch movement for paddle control
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isPaused || isGameOver || !gameEngineRef.current) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      gameEngineRef.current.movePlayerPaddle(x - (gameEngineRef.current.getState().playerPaddle.width / 2));
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        if (isPaused || isGameOver || !gameEngineRef.current) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const x = e.touches[0].clientX - rect.left;
+        gameEngineRef.current.movePlayerPaddle(x - (gameEngineRef.current.getState().playerPaddle.width / 2));
+      }
+    };
+
+    canvas.addEventListener('mousemove', handleMouseMove);
+    canvas.addEventListener('touchmove', handleTouchMove);
+
+    return () => {
+      canvas.removeEventListener('mousemove', handleMouseMove);
+      canvas.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, [isPaused, isGameOver]);
+
+  // Handle pause/resume
+  const togglePause = () => {
+    if (!gameEngineRef.current) return;
+
+    if (isPaused) {
+      gameEngineRef.current.resume();
+      startRendering(canvasRef.current!);
+    } else {
+      gameEngineRef.current.pause();
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+    }
+
+    setIsPaused(!isPaused);
+  };
+
+  // Handle game restart
+  const restartGame = () => {
+    if (!gameEngineRef.current) return;
+
+    gameEngineRef.current.reset();
+    setPlayerScore(0);
+    setAiScore(0);
+    setPlayerLives(DEFAULT_CONFIG.initialLives);
+    setAiLives(DEFAULT_CONFIG.initialLives);
+    setTimeRemaining(DEFAULT_CONFIG.gameDuration);
+    setIsPaused(false);
+    setIsGameOver(false);
+    startRendering(canvasRef.current!);
   };
 
   // Format time display
@@ -306,14 +359,18 @@ const Game: React.FC<GameProps> = ({ difficulty, onGameOver }) => {
             {isGameOver && (
               <>
                 <h2 className="text-4xl text-white mb-4">GAME OVER</h2>
-                <p className="text-2xl text-white mb-6">
-                  {playerScore > aiScore ? 'You Win!' : 'AI Wins!'}
+                <p className={`text-2xl mb-6 ${
+                  winner === 'human' ? 'text-green-400' : 
+                  winner === 'ai' ? 'text-red-400' : 'text-yellow-400'
+                }`}>
+                  {winner === 'human' ? 'You Win!' : 
+                   winner === 'ai' ? 'AI Wins!' : 'Tie Game!'}
                 </p>
                 <p className="text-xl text-white mb-1">
-                  Your Score: {playerScore}
+                  Your Score: <span className="text-green-400 font-bold">{playerScore}</span>
                 </p>
                 <p className="text-xl text-white mb-6">
-                  AI Score: {aiScore}
+                  AI Score: <span className="text-red-400 font-bold">{aiScore}</span>
                 </p>
               </>
             )}

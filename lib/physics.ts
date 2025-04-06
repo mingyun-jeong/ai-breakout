@@ -1,4 +1,4 @@
-import { Ball, Brick, CollisionEvent, GameObject, Paddle, PowerUp, Vector2D } from './types';
+import { Ball, Brick, GameObject, Paddle, PowerUp } from './types';
 
 // Check collision between ball and rectangular object
 export const checkCollision = (ball: Ball, object: GameObject): boolean => {
@@ -88,9 +88,11 @@ export const isBallLost = (ball: Ball, gameHeight: number): boolean => {
 };
 
 // Update ball position based on velocity
-export const updateBallPosition = (ball: Ball, deltaTime: number): void => {
-  ball.position.x += ball.velocity.x * ball.speed * deltaTime;
-  ball.position.y += ball.velocity.y * ball.speed * deltaTime;
+export const updateBallPosition = (ball: Ball, deltaTime: number, gameOver: boolean = false): void => {
+  // 게임 오버 후 볼 속도 증가 (2배)
+  const speedMultiplier = gameOver ? 2.0 : 1.0;
+  ball.position.x += ball.velocity.x * ball.speed * deltaTime * speedMultiplier;
+  ball.position.y += ball.velocity.y * ball.speed * deltaTime * speedMultiplier;
 };
 
 // Update power-up position and check if caught by paddle

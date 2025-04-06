@@ -105,7 +105,7 @@ const HomePage: React.FC = () => {
                 Leaderboard
               </button>
               <a
-                href="https://github.com"
+                href="https://github.com/mingyun-jeong/ai-breakout"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-gray-700 hover:bg-gray-600 text-white py-4 px-6 rounded-lg text-xl font-medium transition-colors flex items-center justify-center"
@@ -119,7 +119,7 @@ const HomePage: React.FC = () => {
               <div className="text-left text-gray-300">
                 <p className="mb-2">• Move your paddle with the mouse to bounce the ball</p>
                 <p className="mb-2">• Break as many bricks as possible within 2 minutes</p>
-                <p className="mb-2">• You start with 3 lives - don't let the ball fall!</p>
+                <p className="mb-2">• You start with 3 lives - don&apos;t let the ball fall!</p>
                 <p className="mb-2">• Special bricks (yellow) give power-ups and extra points</p>
                 <p className="mb-2">• Compete against the AI and compare your scores</p>
               </div>
@@ -186,7 +186,8 @@ const HomePage: React.FC = () => {
             {gameOver && (
               <div className="mt-8 bg-gray-800 rounded-lg p-6 max-w-lg mx-auto">
                 <h2 className="text-2xl font-bold mb-4 text-center">
-                  {gameStats.playerScore > gameStats.aiScore ? 'Victory! 🏆' : 'Defeat 😢'}
+                  {gameStats.playerScore > gameStats.aiScore ? 'Victory! 🏆' : 
+                   gameStats.playerScore < gameStats.aiScore ? 'Defeat 😢' : 'Tie Game! 🤝'}
                 </h2>
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div className="text-center p-3 bg-gray-700 rounded-lg">

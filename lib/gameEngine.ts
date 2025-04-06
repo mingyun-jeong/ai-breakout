@@ -1,4 +1,4 @@
-import { AIDifficulty, Ball, Brick, BrickType, GameConfig, GameEvent, GameState, Paddle, PowerUp, Vector2D } from './types';
+import { Ball, Brick, BrickType, GameConfig, GameEvent, GameState, Paddle } from './types';
 import { checkCollision, handleBrickCollision, handlePaddleCollision, handleWallCollision, isBallLost, updateBallPosition, updatePowerUp } from './physics';
 import { updateAI } from './ai';
 import { applyPowerUp, createPowerUp, updatePowerUps } from './powerups';
@@ -192,7 +192,7 @@ export class GameEngine {
     const deltaTime = (timestamp - this.lastTimestamp) / 1000; // convert to seconds
     this.lastTimestamp = timestamp;
     
-    // Skip update if paused
+    // Skip update if paused or game over
     if (!this.state.paused && !this.state.gameOver) {
       this.update(deltaTime);
     }
@@ -212,19 +212,25 @@ export class GameEngine {
       this.state.gameOver = true;
       
       if (this.eventCallback) {
+        // 게임 오버 시 승자 결정
+        const winner = this.state.playerScore > this.state.aiScore ? 'human' : 
+                      this.state.playerScore < this.state.aiScore ? 'ai' : 'tie';
+        
         this.eventCallback({
           type: 'game_over',
-          player: this.state.playerScore > this.state.aiScore ? 'human' : 'ai',
+          player: winner,
         });
       }
       
       return;
     }
     
-    // Update AI paddle
+    // Update AI paddle with faster speed after game over
+    const aiSpeedMultiplier = this.state.gameOver ? 3.0 : 1.0; // 3배 빠르게 설정
+    
     updateAI(
       this.state,
-      deltaTime,
+      deltaTime * aiSpeedMultiplier, // 게임 오버 시 AI 속도를 빠르게
       this.config.width,
       this.config.aiDifficulty
     );
@@ -287,7 +293,7 @@ export class GameEngine {
       if (!ball.active) continue;
       
       // Update ball position
-      updateBallPosition(ball, deltaTime);
+      updateBallPosition(ball, deltaTime, this.state.gameOver);
       
       // Check wall collisions
       handleWallCollision(ball, this.config.width, this.config.height);
@@ -398,7 +404,7 @@ export class GameEngine {
           
           // Create power-up for special bricks
           if (brick.type === BrickType.SPECIAL) {
-            this.state.powerUps.push(createPowerUp(brick.position, this.config.width));
+            this.state.powerUps.push(createPowerUp(brick.position));
           }
         }
       }
